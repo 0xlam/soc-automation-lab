@@ -1,0 +1,74 @@
+{
+  "timestamp": "2026-11-07T09:55:41.512+0000",
+  "rule": {
+    "level": 10,
+    "description": "Sysmon - Executable launched from a Windows Temp directory or its subdirectories: C:\\\\Windows\\\\Temp\\\\curl-8.23.0_8-win64-mingw\\\\bin\\\\curl.exe",
+    "id": "100020",
+    "firedtimes": 1,
+    "mail": false,
+    "groups": [
+      "windows",
+      "sysmon"
+    ]
+  },
+  "agent": {
+    "id": "004",
+    "name": "DESKTOP-22GM9JP",
+    "ip": "10.0.2.15"
+  },
+  "manager": {
+    "name": "localhost"
+  },
+  "id": "1794045341.991859",
+  "full_log": "{\"win\":{\"system\":{\"providerName\":\"Microsoft-Windows-Sysmon\",\"providerGuid\":\"{5770385f-c22a-43e0-bf4c-06f5698ffbd9}\",\"eventID\":\"1\",\"version\":\"5\",\"level\":\"4\",\"task\":\"1\",\"opcode\":\"0\",\"keywords\":\"0x8000000000000000\",\"systemTime\":\"2026-11-07T09:55:38.2079110Z\",\"eventRecordID\":\"11498\",\"processID\":\"2516\",\"threadID\":\"3048\",\"channel\":\"Microsoft-Windows-Sysmon/Operational\",\"computer\":\"DESKTOP-22GM9JP\",\"severityValue\":\"INFORMATION\",\"message\":\"\\\"Process Create:\\r\\nRuleName: -\\r\\nUtcTime: 2026-11-07 09:55:38.149\\r\\nProcessGuid: {5816968d-f59a-6aee-3902-000000000c00}\\r\\nProcessId: 5844\\r\\nImage: C:\\\\Windows\\\\Temp\\\\curl-8.23.0_8-win64-mingw\\\\bin\\\\curl.exe\\r\\nFileVersion: 8.23.0\\r\\nDescription: The curl executable\\r\\nProduct: The curl executable\\r\\nCompany: curl, https://curl.se/\\r\\nOriginalFileName: curl.exe\\r\\nCommandLine: \\\"C:\\\\Windows\\\\Temp\\\\curl-8.23.0_8-win64-mingw\\\\bin\\\\curl.exe\\\" http://lab.local/file.exe -O\\r\\nCurrentDirectory: C:\\\\Windows\\\\Temp\\\\curl-8.23.0_8-win64-mingw\\\\bin\\\\\\r\\nUser: DESKTOP-22GM9JP\\\\Sarah\\r\\nLogonGuid: {5816968d-ed18-6aee-b541-020000000000}\\r\\nLogonId: 0x241B5\\r\\nTerminalSessionId: 1\\r\\nIntegrityLevel: Medium\\r\\nHashes: MD5=8F5C78DCC5FABFFF76E80B0246188895,SHA256=35121E9CB7C2AE16187F8C5311A840CE4191D6753525138F7FBFBE46511BC271,IMPHASH=1D2F21509ADCBDA19D830048CC46F811\\r\\nParentProcessGuid: {5816968d-ee64-6aee-a900-000000000c00}\\r\\nParentProcessId: 4684\\r\\nParentImage: C:\\\\Windows\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\\r\\nParentCommandLine: \\\"C:\\\\WINDOWS\\\\system32\\\\WindowsPowerShell\\\\v1.0\\\\PowerShell.exe\\\" \\r\\nParentUser: DESKTOP-22GM9JP\\\\Sarah\\\"\"},\"eventdata\":{\"utcTime\":\"2026-11-07 09:55:38.149\",\"processGuid\":\"{5816968d-f59a-6aee-3902-000000000c00}\",\"processId\":\"5844\",\"image\":\"C:\\\\\\\\Windows\\\\\\\\Temp\\\\\\\\curl-8.23.0_8-win64-mingw\\\\\\\\bin\\\\\\\\curl.exe\",\"fileVersion\":\"8.23.0\",\"description\":\"The curl executable\",\"product\":\"The curl executable\",\"company\":\"curl, https://curl.se/\",\"originalFileName\":\"curl.exe\",\"commandLine\":\"\\\\\\\"C:\\\\\\\\Windows\\\\\\\\Temp\\\\\\\\curl-8.23.0_8-win64-mingw\\\\\\\\bin\\\\\\\\curl.exe\\\\\\\" http://lab.local/file.exe -O\",\"currentDirectory\":\"C:\\\\\\\\Windows\\\\\\\\Temp\\\\\\\\curl-8.23.0_8-win64-mingw\\\\\\\\bin\\\\\\\\\",\"user\":\"DESKTOP-22GM9JP\\\\\\\\Sarah\",\"logonGuid\":\"{5816968d-ed18-6aee-b541-020000000000}\",\"logonId\":\"0x241b5\",\"terminalSessionId\":\"1\",\"integrityLevel\":\"Medium\",\"hashes\":\"MD5=8F5C78DCC5FABFFF76E80B0246188895,SHA256=35121E9CB7C2AE16187F8C5311A840CE4191D6753525138F7FBFBE46511BC271,IMPHASH=1D2F21509ADCBDA19D830048CC46F811\",\"parentProcessGuid\":\"{5816968d-ee64-6aee-a900-000000000c00}\",\"parentProcessId\":\"4684\",\"parentImage\":\"C:\\\\\\\\Windows\\\\\\\\System32\\\\\\\\WindowsPowerShell\\\\\\\\v1.0\\\\\\\\powershell.exe\",\"parentCommandLine\":\"\\\\\\\"C:\\\\\\\\WINDOWS\\\\\\\\system32\\\\\\\\WindowsPowerShell\\\\\\\\v1.0\\\\\\\\PowerShell.exe\\\\\\\"\",\"parentUser\":\"DESKTOP-22GM9JP\\\\\\\\Sarah\"}}}",
+  "decoder": {
+    "name": "windows_eventchannel"
+  },
+  "data": {
+    "win": {
+      "system": {
+        "providerName": "Microsoft-Windows-Sysmon",
+        "providerGuid": "{5770385f-c22a-43e0-bf4c-06f5698ffbd9}",
+        "eventID": "1",
+        "version": "5",
+        "level": "4",
+        "task": "1",
+        "opcode": "0",
+        "keywords": "0x8000000000000000",
+        "systemTime": "2026-11-07T09:55:38.2079110Z",
+        "eventRecordID": "11498",
+        "processID": "2516",
+        "threadID": "3048",
+        "channel": "Microsoft-Windows-Sysmon/Operational",
+        "computer": "DESKTOP-22GM9JP",
+        "severityValue": "INFORMATION",
+        "message": "\"Process Create:\r\nRuleName: -\r\nUtcTime: 2026-11-07 09:55:38.149\r\nProcessGuid: {5816968d-f59a-6aee-3902-000000000c00}\r\nProcessId: 5844\r\nImage: C:\\Windows\\Temp\\curl-8.23.0_8-win64-mingw\\bin\\curl.exe\r\nFileVersion: 8.23.0\r\nDescription: The curl executable\r\nProduct: The curl executable\r\nCompany: curl, https://curl.se/\r\nOriginalFileName: curl.exe\r\nCommandLine: \"C:\\Windows\\Temp\\curl-8.23.0_8-win64-mingw\\bin\\curl.exe\" http://lab.local/file.exe -O\r\nCurrentDirectory: C:\\Windows\\Temp\\curl-8.23.0_8-win64-mingw\\bin\\\r\nUser: DESKTOP-22GM9JP\\Sarah\r\nLogonGuid: {5816968d-ed18-6aee-b541-020000000000}\r\nLogonId: 0x241B5\r\nTerminalSessionId: 1\r\nIntegrityLevel: Medium\r\nHashes: MD5=8F5C78DCC5FABFFF76E80B0246188895,SHA256=35121E9CB7C2AE16187F8C5311A840CE4191D6753525138F7FBFBE46511BC271,IMPHASH=1D2F21509ADCBDA19D830048CC46F811\r\nParentProcessGuid: {5816968d-ee64-6aee-a900-000000000c00}\r\nParentProcessId: 4684\r\nParentImage: C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\r\nParentCommandLine: \"C:\\WINDOWS\\system32\\WindowsPowerShell\\v1.0\\PowerShell.exe\" \r\nParentUser: DESKTOP-22GM9JP\\Sarah\""
+      },
+      "eventdata": {
+        "utcTime": "2026-11-07 09:55:38.149",
+        "processGuid": "{5816968d-f59a-6aee-3902-000000000c00}",
+        "processId": "5844",
+        "image": "C:\\\\Windows\\\\Temp\\\\curl-8.23.0_8-win64-mingw\\\\bin\\\\curl.exe",
+        "fileVersion": "8.23.0",
+        "description": "The curl executable",
+        "product": "The curl executable",
+        "company": "curl, https://curl.se/",
+        "originalFileName": "curl.exe",
+        "commandLine": "\\\"C:\\\\Windows\\\\Temp\\\\curl-8.23.0_8-win64-mingw\\\\bin\\\\curl.exe\\\" http://lab.local/file.exe -O",
+        "currentDirectory": "C:\\\\Windows\\\\Temp\\\\curl-8.23.0_8-win64-mingw\\\\bin\\\\",
+        "user": "DESKTOP-22GM9JP\\\\Sarah",
+        "logonGuid": "{5816968d-ed18-6aee-b541-020000000000}",
+        "logonId": "0x241b5",
+        "terminalSessionId": "1",
+        "integrityLevel": "Medium",
+        "hashes": "MD5=8F5C78DCC5FABFFF76E80B0246188895,SHA256=35121E9CB7C2AE16187F8C5311A840CE4191D6753525138F7FBFBE46511BC271,IMPHASH=1D2F21509ADCBDA19D830048CC46F811",
+        "parentProcessGuid": "{5816968d-ee64-6aee-a900-000000000c00}",
+        "parentProcessId": "4684",
+        "parentImage": "C:\\\\Windows\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe",
+        "parentCommandLine": "\\\"C:\\\\WINDOWS\\\\system32\\\\WindowsPowerShell\\\\v1.0\\\\PowerShell.exe\\\"",
+        "parentUser": "DESKTOP-22GM9JP\\\\Sarah"
+      }
+    }
+  },
+  "location": "EventChannel"
+}

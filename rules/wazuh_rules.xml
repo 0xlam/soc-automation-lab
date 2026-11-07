@@ -1,0 +1,8 @@
+<!-- Local rule 100020: Sysmon Event 1, executable launched from a Windows Temp directory -->
+<group name="windows,sysmon,">
+  <rule id="100020" level="10">
+    <if_group>sysmon_event1</if_group>
+    <field name="win.eventdata.image" type="pcre2">(?i)\\\\(?:AppData\\\\Local\\\\Temp|Windows\\\\Temp)\\\\.*\.exe$</field>
+    <description>Sysmon - Executable launched from a Windows Temp directory or its subdirectories: $(win.eventdata.image)</description>
+  </rule>
+</group>

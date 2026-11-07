@@ -1,0 +1,1340 @@
+{
+ "workflow_as_code": false,
+ "actions": [
+  {
+   "app_name": "Shuffle Tools",
+   "app_version": "1.2.0",
+   "description": "Returns objects matching the capture group(s)",
+   "app_id": "3e2bdf9d5069fe3f4746c29d68785a6a",
+   "errors": [],
+   "id": "616e11f0-a66c-4e61-bd98-7b83c7f48cc4",
+   "is_valid": true,
+   "isStartNode": true,
+   "sharing": true,
+   "label": "sha256_regex",
+   "public": true,
+   "generated": false,
+   "environment": "Cloud",
+   "name": "regex_capture_group",
+   "parameters": [
+    {
+     "description": "The input data to use",
+     "id": "",
+     "name": "input_data",
+     "example": "This is some text <with.com> a domain that is with.com",
+     "value": "$exec.all_fields.full_log.win.eventdata.hashes",
+     "multiline": true,
+     "multiselect": false,
+     "options": null,
+     "action_field": "",
+     "variant": "",
+     "required": true,
+     "configuration": false,
+     "tags": null,
+     "schema": {
+      "type": "string"
+     },
+     "skip_multicheck": false,
+     "custom_value": false,
+     "value_replace": null,
+     "unique_toggled": false,
+     "error": "",
+     "hidden": false
+    },
+    {
+     "description": "Your regular expression",
+     "id": "",
+     "name": "regex",
+     "example": "some text <[a-zA-Z0-9.]+> a domain",
+     "value": "SHA256=([0-9A-Fa-f]{64})",
+     "multiline": false,
+     "multiselect": false,
+     "options": null,
+     "action_field": "",
+     "variant": "",
+     "required": true,
+     "configuration": false,
+     "tags": null,
+     "schema": {
+      "type": "string"
+     },
+     "skip_multicheck": false,
+     "custom_value": false,
+     "value_replace": null,
+     "unique_toggled": false,
+     "error": "",
+     "hidden": false
+    }
+   ],
+   "execution_variable": {
+    "description": "",
+    "id": "",
+    "name": "",
+    "value": ""
+   },
+   "position": {
+    "x": -1258.29953528894,
+    "y": -209.94013762843392
+   },
+   "authentication_id": "",
+   "category": "AI",
+   "reference_url": "",
+   "sub_action": false,
+   "run_magic_output": false,
+   "run_magic_input": false,
+   "execution_delay": 0,
+   "category_label": null,
+   "suggestion": false,
+   "parent_controlled": false,
+   "source_workflow": "",
+   "source_execution": "",
+   "_id": "616e11f0-a66c-4e61-bd98-7b83c7f48cc4",
+   "type": "ACTION",
+   "example": "",
+   "flowOrientation": "horizontal",
+   "isValid": true,
+   "circleId": "58b1e8a5-4042-44bc-9ebc-71a59cd46b0b"
+  },
+  {
+   "app_name": "Shuffle Tools",
+   "app_version": "1.2.0",
+   "description": "Runs python with the data input. Any prints will be returned. Avoid __main__ as it is not supported in this environment.",
+   "app_id": "3e2bdf9d5069fe3f4746c29d68785a6a",
+   "errors": [],
+   "id": "37fc0062-9245-40d4-89fa-ee8852af431d",
+   "is_valid": true,
+   "sharing": true,
+   "label": "process_activity_report",
+   "public": true,
+   "generated": false,
+   "environment": "Cloud",
+   "name": "execute_python",
+   "parameters": [
+    {
+     "description": "The code to run. Can be a file ID from within Shuffle.",
+     "id": "",
+     "name": "code",
+     "example": "print(\"hello world\")",
+     "value": "from datetime import datetime, timezone\nimport json\n\ndef clean(value):\n    if value is None or value == \"\":\n        return \"Not available\"\n\n    value = str(value).strip()\n    value = value.replace(\"|\", r\"\\|\")\n    value = value.replace(\"\\r\", \" \").replace(\"\\n\", \" \")\n    return value\n\ndef code(value):\n    text = clean(value)\n\n    if text == \"Not available\":\n        return text  \n\n    if \"`\" in text:\n        return f\"`` {text} ``\"\n\n    return f\"`{text}`\"\n\n\ndef process_name(image):\n    if not image:\n        return \"Unknown\"\n\n    return str(image).replace(\"\\\\\", \"/\").rstrip(\"/\").split(\"/\")[-1]\n\n\ndef format_timestamp(event):\n    timestamp = event.get(\"UtcTime\") or event.get(\"_time\")\n\n    if not timestamp:\n        return \"Unknown\"\n\n    return clean(timestamp)\n\n\ndef format_activity(event_id, event):\n\n    if event_id == \"1\":\n        evidence = (\n            f\"Created: {code(event.get('Image'))}; \"\n            f\"Command: {code(event.get('CommandLine'))}\"\n        )\n        actor = process_name(event.get(\"ParentImage\"))\n\n    elif event_id == \"3\":\n        destination = (\n            f\"{clean(event.get('DestinationIp'))}:\"\n            f\"{clean(event.get('DestinationPort'))}\"\n        )\n        evidence = f\"Destination: {code(destination)} ({clean(event.get('Protocol'))})\"\n        actor = process_name(event.get(\"Image\"))\n\n    elif event_id == \"11\":\n        evidence = f\"Created file: {code(event.get('TargetFilename'))}\"\n        actor = process_name(event.get(\"Image\"))\n\n    elif event_id == \"13\":\n        evidence = (\n            f\"Modified: {code(event.get('TargetObject'))}; \"\n            f\"Data: {code(event.get('Details'))}\"\n        )\n        actor = process_name(event.get(\"Image\"))\n\n    elif event_id == \"22\":\n        evidence = (\n            f\"Queried: {code(event.get('QueryName'))}; \"\n            f\"Results: {code(event.get('QueryResults'))}; \"\n            f\"Status: {clean(event.get('QueryStatus'))}\"\n        )\n        actor = process_name(event.get(\"Image\"))\n\n    else:\n        return None\n\n    return {\n        \"time\": format_timestamp(event),\n        \"event_id\": event_id,\n        \"activity\": {\n            \"1\": \"Child process created\",\n            \"3\": \"Network connection\",\n            \"11\": \"File created\",\n            \"13\": \"Registry modified\",\n            \"22\": \"DNS query\"\n        }[event_id],\n        \"process\": actor,\n        \"evidence\": evidence\n    }\n\n\n\n\ndef build_process_report(splunk_response, root_process_guid):\n\n    results = splunk_response\n\n    if not isinstance(results, list):\n        raise ValueError(\"Splunk results must be a list\")\n\n    if not root_process_guid:\n        raise ValueError(\"Root ProcessGuid is required\")\n\n    root_process_guid = root_process_guid.strip().lower()\n\n    summary = {\n        \"child_processes\": 0,\n        \"network_connections\": 0,\n        \"files_created\": 0,\n        \"registry_modifications\": 0,\n        \"dns_queries\": 0\n    }\n\n    activity_rows = []\n\n    for event in results:\n\n        event_id = str(event.get(\"EventCode\", \"\")).strip()\n\n        process_guid = str(\n            event.get(\"ProcessGuid\", \"\")\n        ).strip().lower()\n\n        parent_guid = str(\n            event.get(\"ParentProcessGuid\", \"\")\n        ).strip().lower()\n\n\n        if event_id == \"1\":\n            if parent_guid != root_process_guid:\n                continue\n\n            summary[\"child_processes\"] += 1\n\n        elif event_id == \"3\":\n            if process_guid != root_process_guid:\n                continue\n\n            summary[\"network_connections\"] += 1\n\n        elif event_id == \"11\":\n            if process_guid != root_process_guid:\n                continue\n\n            summary[\"files_created\"] += 1\n\n        elif event_id == \"13\":\n            if process_guid != root_process_guid:\n                continue\n\n            summary[\"registry_modifications\"] += 1\n\n        elif event_id == \"22\":\n            if process_guid != root_process_guid:\n                continue\n\n            summary[\"dns_queries\"] += 1\n\n        else:\n            continue\n\n        activity = format_activity(event_id, event)\n\n        if activity:\n            activity_rows.append(activity)\n\n    \n    activity_rows.sort(key=lambda row: row[\"time\"])\n\n    summary_markdown = \"\"\"## 7. Process Activity Summary\n\n| Activity | Count |\n|---|---:|\n\"\"\"\n\n    summary_labels = {\n        \"child_processes\": \"Child processes created\",\n        \"network_connections\": \"Network connections\",\n        \"files_created\": \"Files created\",\n        \"registry_modifications\": \"Registry modifications\",\n        \"dns_queries\": \"DNS queries\"\n    }\n\n    for key, label in summary_labels.items():\n        summary_markdown += (\n            f\"| {label} | {summary[key]} |\\n\"\n        )\n\n    \n    activity_markdown = \"\"\"## 8. Correlated Process Activity\n\n| Time (UTC) | Activity | Process | Evidence |\n|---|---|---|---|\n\"\"\"\n\n    if activity_rows:\n\n        for row in activity_rows:\n            activity_markdown += (\n                f\"| {row['time']} \"\n                f\"| {row['activity']} \"\n                f\"| `{clean(row['process'])}` \"\n                f\"| {row['evidence']} |\\n\"\n            )\n\n    else:\n        activity_markdown += (\n            \"| - | No matching activity | - | \"\n            \"No matching events returned |\\n\"\n        )\n\n    return {\n        \"summary\": summary,\n        \"activity_rows\": activity_rows,\n        \"markdown\": summary_markdown + \"\\n\" + activity_markdown\n    }\n\n\nraw = r\"\"\"$splunk.body\"\"\"\n\ndata = [json.loads(line) for line in raw.splitlines() if line.strip()]\nevents = [row[\"result\"] for row in data if \"result\" in row]\n\nreport = build_process_report(\n    splunk_response=events,\n    root_process_guid=\"$exec.all_fields.full_log.win.eventdata.processGuid\",\n)\n\nprint(report[\"markdown\"])",
+     "multiline": true,
+     "multiselect": false,
+     "options": null,
+     "action_field": "",
+     "variant": "",
+     "required": true,
+     "configuration": false,
+     "tags": null,
+     "schema": {
+      "type": "string"
+     },
+     "skip_multicheck": false,
+     "custom_value": false,
+     "value_replace": null,
+     "unique_toggled": false,
+     "error": "",
+     "hidden": false
+    }
+   ],
+   "execution_variable": {
+    "description": "",
+    "id": "",
+    "name": "",
+    "value": ""
+   },
+   "position": {
+    "x": 17.701735312688918,
+    "y": -210.36650980771006
+   },
+   "authentication_id": "",
+   "category": "AI",
+   "reference_url": "",
+   "sub_action": false,
+   "run_magic_output": false,
+   "run_magic_input": false,
+   "execution_delay": 0,
+   "category_label": [
+    "execute_(code)"
+   ],
+   "suggestion": false,
+   "parent_controlled": false,
+   "source_workflow": "",
+   "source_execution": "",
+   "fillGradient": [
+    "rgba(242, 101, 59, 1)",
+    "rgba(242, 101, 59, 1)"
+   ],
+   "fillstyle": "linear-gradient",
+   "_id": "37fc0062-9245-40d4-89fa-ee8852af431d",
+   "type": "ACTION",
+   "example": "",
+   "flowOrientation": "horizontal",
+   "circleId": "1a274d7a-6060-41f2-b573-b856b806f0c6",
+   "isValid": true,
+   "authentication": [],
+   "selectedAuthentication": {}
+  },
+  {
+   "app_name": "Virustotal_v3",
+   "app_version": "1.1.0",
+   "description": "SHA-256, SHA-1 or MD5 identifying the file\n\nhttps://www.virustotal.com/api/v3/files/{id}",
+   "app_id": "7ea4a8ac1dbc114c3f67e1e47dd87cc4",
+   "errors": [],
+   "id": "6dca7bb1-48ad-4f99-8744-504e54cbef1b",
+   "is_valid": true,
+   "sharing": true,
+   "private_id": "7ea4a8ac1dbc114c3f67e1e47dd87cc4",
+   "label": "vt",
+   "public": true,
+   "generated": true,
+   "environment": "Cloud",
+   "name": "get_a_hash_report_",
+   "parameters": [
+    {
+     "description": "The apikey to use",
+     "id": "",
+     "name": "apikey",
+     "example": "**********",
+     "value": "<API_KEY_REDACTED>",
+     "multiline": false,
+     "multiselect": false,
+     "options": null,
+     "action_field": "",
+     "variant": "",
+     "required": true,
+     "configuration": true,
+     "tags": null,
+     "schema": {
+      "type": "string"
+     },
+     "skip_multicheck": false,
+     "custom_value": false,
+     "value_replace": null,
+     "unique_toggled": false,
+     "error": "",
+     "hidden": false
+    },
+    {
+     "description": "The URL of the API",
+     "id": "",
+     "name": "url",
+     "example": "https://www.virustotal.com",
+     "value": "https://www.virustotal.com",
+     "multiline": false,
+     "multiselect": false,
+     "options": null,
+     "action_field": "",
+     "variant": "",
+     "required": true,
+     "configuration": true,
+     "tags": null,
+     "schema": {
+      "type": "string"
+     },
+     "skip_multicheck": false,
+     "custom_value": false,
+     "value_replace": null,
+     "unique_toggled": false,
+     "error": "",
+     "hidden": false
+    },
+    {
+     "description": "Generated by shuffler.io OpenAPI",
+     "id": "",
+     "name": "id",
+     "example": "",
+     "value": "{{ $sha256_regex.group_0 | first }}",
+     "multiline": false,
+     "multiselect": false,
+     "options": null,
+     "action_field": "",
+     "variant": "",
+     "required": true,
+     "configuration": false,
+     "tags": null,
+     "schema": {
+      "type": "string"
+     },
+     "skip_multicheck": false,
+     "custom_value": false,
+     "value_replace": null,
+     "unique_toggled": false,
+     "error": "",
+     "hidden": false
+    },
+    {
+     "description": "Add or edit headers",
+     "id": "",
+     "name": "headers",
+     "example": "Content-Type=application/json\nAccept=application/json\r\n",
+     "value": "Content-Type:application/json\nAccept:application/json",
+     "multiline": true,
+     "multiselect": false,
+     "options": null,
+     "action_field": "",
+     "variant": "",
+     "required": false,
+     "configuration": false,
+     "tags": null,
+     "schema": {
+      "type": "string"
+     },
+     "skip_multicheck": false,
+     "custom_value": false,
+     "value_replace": null,
+     "unique_toggled": false,
+     "error": "",
+     "hidden": false
+    },
+    {
+     "description": "Add or edit queries",
+     "id": "",
+     "name": "queries",
+     "example": "view=basic&redirect=test",
+     "value": "",
+     "multiline": true,
+     "multiselect": false,
+     "options": null,
+     "action_field": "",
+     "variant": "",
+     "required": false,
+     "configuration": false,
+     "tags": null,
+     "schema": {
+      "type": "string"
+     },
+     "skip_multicheck": false,
+     "custom_value": false,
+     "value_replace": null,
+     "unique_toggled": false,
+     "error": "",
+     "hidden": false
+    },
+    {
+     "description": "Check if you want to verify request",
+     "id": "",
+     "name": "ssl_verify",
+     "example": "True",
+     "value": "False",
+     "multiline": false,
+     "multiselect": false,
+     "options": [
+      "False",
+      "True"
+     ],
+     "action_field": "",
+     "variant": "",
+     "required": false,
+     "configuration": false,
+     "tags": null,
+     "schema": {
+      "type": "string"
+     },
+     "skip_multicheck": false,
+     "custom_value": false,
+     "value_replace": null,
+     "unique_toggled": false,
+     "error": "",
+     "hidden": false
+    },
+    {
+     "description": "Choose if we should write the result straight to a file or not",
+     "id": "",
+     "name": "to_file",
+     "example": "False",
+     "value": "False",
+     "multiline": false,
+     "multiselect": false,
+     "options": [
+      "False",
+      "True"
+     ],
+     "action_field": "",
+     "variant": "",
+     "required": false,
+     "configuration": false,
+     "tags": null,
+     "schema": {
+      "type": "string"
+     },
+     "skip_multicheck": false,
+     "custom_value": false,
+     "value_replace": null,
+     "unique_toggled": false,
+     "error": "",
+     "hidden": false
+    }
+   ],
+   "execution_variable": {
+    "description": "",
+    "id": "",
+    "name": "",
+    "value": ""
+   },
+   "position": {
+    "x": -785.434488337296,
+    "y": -210.67364075216443
+   },
+   "authentication_id": "9d4fae5e-430e-4eb4-a4bc-0a84e6c0f9e4",
+   "category": "Intel",
+   "reference_url": "",
+   "sub_action": false,
+   "run_magic_output": false,
+   "run_magic_input": false,
+   "execution_delay": 0,
+   "category_label": [
+    "Search IOC",
+    "get_ioc",
+    "search_ioc"
+   ],
+   "suggestion": false,
+   "parent_controlled": false,
+   "source_workflow": "",
+   "source_execution": "",
+   "example": "",
+   "isValid": true
+  },
+  {
+   "app_name": "Shuffle Tools",
+   "app_version": "1.2.0",
+   "description": "Runs python with the data input. Any prints will be returned. Avoid __main__ as it is not supported in this environment.",
+   "app_id": "3e2bdf9d5069fe3f4746c29d68785a6a",
+   "errors": [],
+   "id": "a478bb28-16a5-48a4-98d6-03e85de9857a",
+   "is_valid": true,
+   "sharing": true,
+   "label": "prepare_thehive_alert",
+   "public": true,
+   "generated": false,
+   "environment": "Cloud",
+   "name": "execute_python",
+   "parameters": [
+    {
+     "description": "The code to run. Can be a file ID from within Shuffle.",
+     "id": "",
+     "name": "code",
+     "example": "print(\"hello world\")",
+     "value": "import ast\nimport re\nimport json\nfrom datetime import datetime, timezone\n\n\ndef parse(raw):\n    s = re.sub(r'\\b(U|u)ndefined\\b', 'None', str(raw))\n    return ast.literal_eval(s)\n\nwazuh = parse(r\"\"\"{{ $exec.all_fields }}\"\"\")\nvt = parse(r\"\"\"{{ $vt }}\"\"\")\n\nsha256 = \"\"\"{{ $sha256_regex.group_0 | first }}\"\"\"\n\nprocess_activity_markdown = r\"\"\"$process_activity_report.message\"\"\"\nprocess_activity_markdown = process_activity_markdown.replace(\"\\\\n\", \"\\n\")\n\ndef get_nested(data, *keys, default=None):\n    for key in keys:\n        if not isinstance(data, dict):\n            return default\n        data = data.get(key)\n\n        if data is None:\n            return default\n\n    return data\n\ndef display(value):\n    return str(value) if value is not None else \"Not available\"\n\ndef code(value):\n    text = display(value)\n\n    if text == \"Not available\":\n        return text\n\n    if \"`\" in text:           \n        return f\"`` {text} ``\"\n\n    return f\"`{text}`\"\n\n\ndef format_timestamp(value):\n    if value is None:\n        return None\n\n    try:\n        return datetime.fromtimestamp(\n            int(value),\n            tz=timezone.utc\n        ).strftime(\"%Y-%m-%d %H:%M:%S UTC\")\n    except (ValueError, TypeError, OverflowError, OSError):\n        return None\n\n\n\nevent = get_nested(wazuh, \"data\", \"win\", \"eventdata\", default={})\nagent = wazuh.get(\"agent\", {})\nrule = wazuh.get(\"rule\", {})\n\nimage = event.get(\"image\")\ncommand_line = event.get(\"commandLine\")\ncurrent_directory = event.get(\"currentDirectory\")\nusername = event.get(\"user\")\nlogon_id = event.get(\"logonId\")\nterminal_session = event.get(\"terminalSessionId\")\nintegrity_level = event.get(\"integrityLevel\")\nprocess_id = event.get(\"processId\")\nprocess_guid = event.get(\"processGuid\")\nparent_image = event.get(\"parentImage\")\nparent_process_id = event.get(\"parentProcessId\")\nparent_command_line = event.get(\"parentCommandLine\")\n\nagent_id = agent.get(\"id\")\nagent_name = agent.get(\"name\")\nagent_ip = agent.get(\"ip\")\nmanager_name = get_nested(wazuh, \"manager\", \"name\")\n\nwazuh_alert_id = wazuh.get(\"id\")\nrule_id = rule.get(\"id\")\nrule_level = rule.get(\"level\")\n\n\n# Normalize VirusTotal response\nhttp_status = vt.get(\"status\")\nbody = vt.get(\"body\", {})\n\n\nvt_status = \"failed\"\nvt_error = None\n\nattributes = {}\nvt_data = {}\n\nif http_status == 200:\n    vt_data = body.get(\"data\", {})\n    raw_attrs = vt_data.get(\"attributes\", {})\n    attributes = raw_attrs if isinstance(raw_attrs, dict) else {}\n\n    if attributes and \"last_analysis_stats\" in attributes:\n        vt_status = \"completed\"\n        sha256 = attributes.get(\"sha256\") or sha256\n    elif attributes:\n        vt_error = \"VirusTotal returned a file record without analysis statistics.\"\n    else:\n        vt_error = \"HTTP 200 received, but the VT report data was missing.\"\n\nelif http_status == 404:\n    vt_status = \"not_found\"\n    vt_error = get_nested(\n        body, \"error\", \"message\",\n        default=\"File hash not found in VirusTotal.\"\n    )\n\nelse:\n    vt_status = \"failed\"\n    vt_error = get_nested(\n        body, \"error\", \"message\",\n        default=f\"VirusTotal request failed with HTTP status {http_status}.\"\n    )\n\n\n\nstats = attributes.get(\"last_analysis_stats\", {})\n\nmalicious = stats.get(\"malicious\")\nsuspicious = stats.get(\"suspicious\")\nundetected = stats.get(\"undetected\")\nharmless = stats.get(\"harmless\")\ntimeout = stats.get(\"timeout\")\n\nsha1 = attributes.get(\"sha1\")\nmd5 = attributes.get(\"md5\")\n\nfile_type = (\n    attributes.get(\"type_description\")\n    or get_nested(attributes, \"detectiteasy\", \"filetype\")\n)\n\nreputation = attributes.get(\"reputation\")\n\nfirst_submission = format_timestamp(\n    attributes.get(\"first_submission_date\")\n)\n\nlast_analysis = format_timestamp(\n    attributes.get(\"last_analysis_date\")\n)\n\n\nvt_file_id = vt_data.get(\"id\") or sha256\n\nvt_link = (\n    f\"https://www.virustotal.com/gui/file/{vt_file_id}\"\n    if vt_file_id and vt_status == \"completed\"\n    else None\n)\n\nvt_report_line = (\n    f\"[View on VirusTotal]({vt_link})\"\n    if vt_link\n    else \"Not available\"\n)\n\n\n\n\ndescription = f\"\"\"## 1. Detection Summary\n- Detection: Executable launched from a Windows Temp directory or its subdirectories\n- Detection source: Wazuh\n- Wazuh rule ID: {display(rule_id)}\n- Wazuh rule level: {display(rule_level)}\n- Wazuh alert ID: {display(wazuh_alert_id)}\n\n## 2. Execution Details\n- Image: {code(image)}\n- CommandLine: {code(command_line)}\n- WorkingDirectory: {code(current_directory)}\n- User: {code(username)}\n- LogonId: {code(logon_id)}\n- Terminal Session: {display(terminal_session)}\n- Integrity Level: {display(integrity_level)}\n- Process ID: {display(process_id)}\n- Process GUID: {code(process_guid)}\n- Parent Image: {code(parent_image)}\n- Parent Process ID: {display(parent_process_id)}\n- Parent CommandLine: {code(parent_command_line)}\n\n## 3. Affected Endpoint\n- Agent ID: {display(agent_id)}\n- Hostname: {code(agent_name)}\n- Endpoint IP: {code(agent_ip)}\n- Manager: {code(manager_name)}\n\n## 4. File Information\n- SHA256: {code(sha256)}\n- SHA1: {code(sha1)}\n- MD5: {code(md5)}\n- File Type: {code(file_type)}\n\n## 5. VirusTotal Analysis\n- Lookup Status: {display(vt_status)}\n- HTTP Status: {display(http_status)}\n- Malicious detections: {display(malicious)}\n- Suspicious detections: {display(suspicious)}\n- Undetected: {display(undetected)}\n- Harmless: {display(harmless)}\n- Timeout: {display(timeout)}\n- Reputation: {display(reputation)}\n- First Submission: {code(first_submission)}\n- Last Analysis: {code(last_analysis)}\n- Error: {display(vt_error)}\n- VirusTotal Report: {vt_report_line}\n\"\"\"\n\nobservables = []\n\nif sha256:\n    observables.append({\n        \"dataType\": \"hash\",\n        \"data\": [sha256],\n        \"tlp\": 2,\n        \"tags\": [\"sha256\", \"virustotal\"],\n        \"message\": \"Executable SHA256\",\n        \"ioc\": False\n    })\n\nif image:\n    observables.append({\n        \"dataType\": \"filename\",\n        \"data\": [image],\n        \"tlp\": 2,\n        \"message\": \"Executable Image Path\",\n        \"ioc\": False\n    })\n\nif agent_ip:\n    observables.append({\n        \"dataType\": \"ip\",\n        \"data\": [agent_ip],\n        \"tlp\": 2,\n        \"tags\": [\"endpoint\", \"agent\"],\n        \"message\": \"Affected Endpoint IP\",\n        \"ioc\": False\n    })\n\n\nmalicious_count = malicious or 0\nsuspicious_count = suspicious or 0\n\nif vt_status == \"completed\" and malicious_count >= 10:\n    severity = 4\nelif vt_status == \"completed\" and malicious_count >= 3:\n    severity = 3\nelif vt_status == \"completed\" and (malicious_count > 0 or suspicious_count > 0):\n    severity = 2\nelif vt_status != \"completed\":\n    severity = 3\nelse:\n    severity = 1\n\n\npayload = {\n    \"type\": \"external\",\n    \"source\": \"Wazuh\",\n    \"sourceRef\": str(wazuh_alert_id),\n    \"externalLink\": vt_link,\n    \"title\": (\n        \"Suspicious executable execution from Windows Temp directory: \"\n        f\"{display(image)}\"\n    ),\n    \"description\": description + process_activity_markdown,\n    \"severity\": severity,\n    \"tags\": [\n        \"wazuh\",\n        \"sysmon\",\n        \"windows\",\n        \"temp-execution\",\n        \"virustotal\"\n    ],\n    \"flag\": False,\n    \"tlp\": 2,\n    \"pap\": 2,\n    \"status\": \"New\",\n    \"observables\": observables\n}\n\n\nprint(json.dumps(payload, ensure_ascii=False))",
+     "multiline": true,
+     "multiselect": false,
+     "options": null,
+     "action_field": "",
+     "variant": "",
+     "required": true,
+     "configuration": false,
+     "tags": null,
+     "schema": {
+      "type": "string"
+     },
+     "skip_multicheck": false,
+     "custom_value": false,
+     "value_replace": null,
+     "unique_toggled": false,
+     "error": "",
+     "hidden": false
+    }
+   ],
+   "execution_variable": {
+    "description": "",
+    "id": "",
+    "name": "",
+    "value": ""
+   },
+   "position": {
+    "x": 318.2277203767592,
+    "y": -212.1503242283603
+   },
+   "authentication_id": "",
+   "category": "AI",
+   "reference_url": "",
+   "sub_action": false,
+   "run_magic_output": false,
+   "run_magic_input": false,
+   "execution_delay": 0,
+   "category_label": [
+    "execute_(code)"
+   ],
+   "suggestion": false,
+   "parent_controlled": false,
+   "source_workflow": "",
+   "source_execution": "",
+   "fillGradient": [
+    "rgba(242, 101, 59, 1)",
+    "rgba(242, 101, 59, 1)"
+   ],
+   "fillstyle": "linear-gradient",
+   "_id": "a478bb28-16a5-48a4-98d6-03e85de9857a",
+   "type": "ACTION",
+   "example": "",
+   "flowOrientation": "horizontal",
+   "circleId": "0ad03a19-d510-4a12-8a50-4d2b99e79088",
+   "isValid": true,
+   "authentication": [],
+   "selectedAuthentication": {}
+  },
+  {
+   "app_name": "Splunk",
+   "app_version": "1.1.0",
+   "description": "Run search query\n\nhttps://localhost:8089/services/search/jobs/export",
+   "app_id": "1995363ec370368ed05a2882ec0ea8fc",
+   "errors": [],
+   "id": "ab6334ad-1570-464c-a46c-707d59b4bcae",
+   "is_valid": true,
+   "sharing": true,
+   "private_id": "1995363ec370368ed05a2882ec0ea8fc",
+   "label": "splunk",
+   "public": true,
+   "generated": true,
+   "environment": "Cloud",
+   "name": "post_search_query",
+   "parameters": [
+    {
+     "description": "The username to use",
+     "id": "",
+     "name": "username_basic",
+     "example": "The username to use",
+     "value": "<USERNAME_REDACTED>",
+     "multiline": false,
+     "multiselect": false,
+     "options": null,
+     "action_field": "",
+     "variant": "STATIC_VALUE",
+     "required": true,
+     "configuration": true,
+     "tags": null,
+     "schema": {
+      "type": "string"
+     },
+     "skip_multicheck": false,
+     "custom_value": false,
+     "value_replace": null,
+     "unique_toggled": false,
+     "error": "",
+     "hidden": false
+    },
+    {
+     "description": "The password to use",
+     "id": "",
+     "name": "password_basic",
+     "example": "***********",
+     "value": "<PASSWORD_REDACTED>",
+     "multiline": false,
+     "multiselect": false,
+     "options": null,
+     "action_field": "",
+     "variant": "STATIC_VALUE",
+     "required": true,
+     "configuration": true,
+     "tags": null,
+     "schema": {
+      "type": "string"
+     },
+     "skip_multicheck": false,
+     "custom_value": false,
+     "value_replace": null,
+     "unique_toggled": false,
+     "error": "",
+     "hidden": false
+    },
+    {
+     "description": "The URL of the API",
+     "id": "",
+     "name": "url",
+     "example": "https://localhost:8089",
+     "value": "https://<SPLUNK_HOST>",
+     "multiline": false,
+     "multiselect": false,
+     "options": null,
+     "action_field": "",
+     "variant": "STATIC_VALUE",
+     "required": true,
+     "configuration": true,
+     "tags": null,
+     "schema": {
+      "type": "string"
+     },
+     "skip_multicheck": false,
+     "custom_value": false,
+     "value_replace": null,
+     "unique_toggled": false,
+     "error": "",
+     "hidden": false
+    },
+    {
+     "description": "Generated by shuffler.io OpenAPI",
+     "id": "TOGGLED",
+     "name": "body",
+     "example": "search=${search}&earliest_time=${earliest_time}&count=${count}",
+     "value": "search=search index=win_sysmon sourcetype=Sysmon EventCode IN (1,3,11,13,22)\n  (ProcessGuid=\"$exec.all_fields.full_log.win.eventdata.processGuid\" OR ParentProcessGuid=\"$exec.all_fields.full_log.win.eventdata.processGuid\")\n| table _time host EventCode UtcTime ProcessGuid ParentProcessGuid Image CommandLine ParentImage Protocol DestinationIp DestinationPort TargetFilename TargetObject Details QueryName QueryStatus QueryResults\n| sort 0 _time\n&earliest_time=-24h\n&output_mode=json",
+     "multiline": true,
+     "multiselect": false,
+     "options": null,
+     "action_field": "",
+     "variant": "STATIC_VALUE",
+     "required": true,
+     "configuration": false,
+     "tags": null,
+     "schema": {
+      "type": "string"
+     },
+     "skip_multicheck": false,
+     "custom_value": false,
+     "value_replace": null,
+     "unique_toggled": false,
+     "error": "",
+     "hidden": false
+    },
+    {
+     "description": "Add or edit headers",
+     "id": "",
+     "name": "headers",
+     "example": "Content-Type=application/json\nAccept=application/json\r\n",
+     "value": "Content-Type=application/json\nAccept=application/json\r\n",
+     "multiline": true,
+     "multiselect": false,
+     "options": null,
+     "action_field": "",
+     "variant": "STATIC_VALUE",
+     "required": false,
+     "configuration": false,
+     "tags": null,
+     "schema": {
+      "type": "string"
+     },
+     "skip_multicheck": false,
+     "custom_value": false,
+     "value_replace": null,
+     "unique_toggled": false,
+     "error": "",
+     "hidden": false
+    },
+    {
+     "description": "Add or edit queries",
+     "id": "",
+     "name": "queries",
+     "example": "view=basic&redirect=test",
+     "value": "",
+     "multiline": true,
+     "multiselect": false,
+     "options": null,
+     "action_field": "",
+     "variant": "STATIC_VALUE",
+     "required": false,
+     "configuration": false,
+     "tags": null,
+     "schema": {
+      "type": "string"
+     },
+     "skip_multicheck": false,
+     "custom_value": false,
+     "value_replace": null,
+     "unique_toggled": false,
+     "error": "",
+     "hidden": false
+    },
+    {
+     "description": "Check if you want to verify request",
+     "id": "",
+     "name": "ssl_verify",
+     "example": "True",
+     "value": "False",
+     "multiline": false,
+     "multiselect": false,
+     "options": [
+      "False",
+      "True"
+     ],
+     "action_field": "",
+     "variant": "STATIC_VALUE",
+     "required": false,
+     "configuration": false,
+     "tags": null,
+     "schema": {
+      "type": "string"
+     },
+     "skip_multicheck": false,
+     "custom_value": false,
+     "value_replace": null,
+     "unique_toggled": false,
+     "error": "",
+     "hidden": false
+    },
+    {
+     "description": "Choose if we should write the result straight to a file or not",
+     "id": "",
+     "name": "to_file",
+     "example": "False",
+     "value": "False",
+     "multiline": false,
+     "multiselect": false,
+     "options": [
+      "False",
+      "True"
+     ],
+     "action_field": "",
+     "variant": "STATIC_VALUE",
+     "required": false,
+     "configuration": false,
+     "tags": null,
+     "schema": {
+      "type": "string"
+     },
+     "skip_multicheck": false,
+     "custom_value": false,
+     "value_replace": null,
+     "unique_toggled": false,
+     "error": "",
+     "hidden": false
+    }
+   ],
+   "execution_variable": {
+    "description": "",
+    "id": "",
+    "name": "",
+    "value": ""
+   },
+   "position": {
+    "x": -328.4059303584005,
+    "y": -209.29000513549565
+   },
+   "authentication_id": "",
+   "category": "SIEM",
+   "reference_url": "",
+   "sub_action": false,
+   "run_magic_output": false,
+   "run_magic_input": false,
+   "execution_delay": 0,
+   "category_label": [
+    "Search"
+   ],
+   "suggestion": false,
+   "parent_controlled": false,
+   "source_workflow": "",
+   "source_execution": "",
+   "example": "",
+   "isValid": true
+  },
+  {
+   "app_name": "TheHive",
+   "app_version": "1.1.0",
+   "description": "\n\nhttp://your-instance/api/v1/alert",
+   "app_id": "5fefa1911e01a005b54f94dcb6830d82",
+   "errors": [],
+   "id": "4cae1d11-ed76-4ba8-9b1f-12e65e0747d0",
+   "is_valid": true,
+   "sharing": true,
+   "private_id": "5fefa1911e01a005b54f94dcb6830d82",
+   "label": "TheHive_1",
+   "public": true,
+   "generated": true,
+   "environment": "Cloud",
+   "name": "post_create_alert",
+   "parameters": [
+    {
+     "description": "The apikey to use",
+     "id": "",
+     "name": "apikey",
+     "example": "The API key to use. Space = skip",
+     "value": "<API_KEY_REDACTED>",
+     "multiline": false,
+     "multiselect": false,
+     "options": null,
+     "action_field": "",
+     "variant": "STATIC_VALUE",
+     "required": true,
+     "configuration": true,
+     "tags": null,
+     "schema": {
+      "type": "string"
+     },
+     "skip_multicheck": false,
+     "custom_value": false,
+     "value_replace": null,
+     "unique_toggled": false,
+     "error": "",
+     "hidden": false
+    },
+    {
+     "description": "The URL of the API",
+     "id": "",
+     "name": "url",
+     "example": "http://your-instance",
+     "value": "https://<THEHIVE_HOST>",
+     "multiline": false,
+     "multiselect": false,
+     "options": null,
+     "action_field": "",
+     "variant": "STATIC_VALUE",
+     "required": true,
+     "configuration": true,
+     "tags": null,
+     "schema": {
+      "type": "string"
+     },
+     "skip_multicheck": false,
+     "custom_value": false,
+     "value_replace": null,
+     "unique_toggled": false,
+     "error": "",
+     "hidden": false
+    },
+    {
+     "description": "Generated by shuffler.io OpenAPI",
+     "id": "",
+     "name": "body",
+     "example": "{\n  \"description\": \"{{ '''${description}''' | replace: '\\n', '\\\\r\\\\n' }}\",\n  \"externallink\": \"${externallink}\",\n  \"flag\": ${flag},\n  \"pap\": ${pap},\n  \"severity\": \"${severity}\",\n  \"source\": \"${source}\",\n  \"sourceRef\": \"${sourceref}\",\n  \"status\": \"${status}\",\n  \"summary\": \"${summary}\",\n  \"tags\": \"${tags}\",\n  \"title\": \"${title}\",\n  \"tlp\": ${tlp},\n  \"type\": \"${type}\"\n}",
+     "value": "$prepare_thehive_alert.message",
+     "multiline": true,
+     "multiselect": false,
+     "options": null,
+     "action_field": "",
+     "variant": "STATIC_VALUE",
+     "required": true,
+     "configuration": false,
+     "tags": null,
+     "schema": {
+      "type": "string"
+     },
+     "skip_multicheck": false,
+     "custom_value": false,
+     "value_replace": null,
+     "unique_toggled": false,
+     "error": "",
+     "hidden": false
+    },
+    {
+     "description": "Add or edit headers",
+     "id": "",
+     "name": "headers",
+     "example": "Content-Type=application/json\nAccept=application/json\r\n",
+     "value": "Content-Type=application/json\nAccept=application/json\r\n",
+     "multiline": true,
+     "multiselect": false,
+     "options": null,
+     "action_field": "",
+     "variant": "STATIC_VALUE",
+     "required": false,
+     "configuration": false,
+     "tags": null,
+     "schema": {
+      "type": "string"
+     },
+     "skip_multicheck": false,
+     "custom_value": false,
+     "value_replace": null,
+     "unique_toggled": false,
+     "error": "",
+     "hidden": false
+    },
+    {
+     "description": "Add or edit queries",
+     "id": "",
+     "name": "queries",
+     "example": "view=basic&redirect=test",
+     "value": "",
+     "multiline": true,
+     "multiselect": false,
+     "options": null,
+     "action_field": "",
+     "variant": "STATIC_VALUE",
+     "required": false,
+     "configuration": false,
+     "tags": null,
+     "schema": {
+      "type": "string"
+     },
+     "skip_multicheck": false,
+     "custom_value": false,
+     "value_replace": null,
+     "unique_toggled": false,
+     "error": "",
+     "hidden": false
+    },
+    {
+     "description": "Check if you want to verify request",
+     "id": "",
+     "name": "ssl_verify",
+     "example": "True",
+     "value": "False",
+     "multiline": false,
+     "multiselect": false,
+     "options": [
+      "False",
+      "True"
+     ],
+     "action_field": "",
+     "variant": "STATIC_VALUE",
+     "required": false,
+     "configuration": false,
+     "tags": null,
+     "schema": {
+      "type": "string"
+     },
+     "skip_multicheck": false,
+     "custom_value": false,
+     "value_replace": null,
+     "unique_toggled": false,
+     "error": "",
+     "hidden": false
+    },
+    {
+     "description": "Choose if we should write the result straight to a file or not",
+     "id": "",
+     "name": "to_file",
+     "example": "False",
+     "value": "False",
+     "multiline": false,
+     "multiselect": false,
+     "options": [
+      "False",
+      "True"
+     ],
+     "action_field": "",
+     "variant": "STATIC_VALUE",
+     "required": false,
+     "configuration": false,
+     "tags": null,
+     "schema": {
+      "type": "string"
+     },
+     "skip_multicheck": false,
+     "custom_value": false,
+     "value_replace": null,
+     "unique_toggled": false,
+     "error": "",
+     "hidden": false
+    }
+   ],
+   "execution_variable": {
+    "description": "",
+    "id": "",
+    "name": "",
+    "value": ""
+   },
+   "position": {
+    "x": 677.422654519847,
+    "y": -213.5307836093073
+   },
+   "authentication_id": "514590ef-cf85-4c7b-a1ae-e7edf27b1225",
+   "category": "Cases",
+   "reference_url": "",
+   "sub_action": false,
+   "run_magic_output": false,
+   "run_magic_input": false,
+   "execution_delay": 0,
+   "category_label": [
+    "Create ticket"
+   ],
+   "suggestion": false,
+   "parent_controlled": false,
+   "source_workflow": "",
+   "source_execution": "",
+   "example": "",
+   "isValid": true
+  }
+ ],
+ "branches": [
+  {
+   "id": "0d4644b1-6d43-4cbc-83bd-6c5c12179974",
+   "source_id": "a478bb28-16a5-48a4-98d6-03e85de9857a",
+   "destination_id": "4cae1d11-ed76-4ba8-9b1f-12e65e0747d0",
+   "conditions": [],
+   "decorator": false,
+   "source_parent": ""
+  },
+  {
+   "id": "785b35d3-fad9-4120-bf34-411192fbdfba",
+   "source_id": "ab6334ad-1570-464c-a46c-707d59b4bcae",
+   "destination_id": "37fc0062-9245-40d4-89fa-ee8852af431d",
+   "conditions": [],
+   "decorator": false,
+   "source_parent": ""
+  },
+  {
+   "id": "d2fec111-d9af-43a3-a8a4-9f81d30e295e",
+   "source_id": "37fc0062-9245-40d4-89fa-ee8852af431d",
+   "destination_id": "a478bb28-16a5-48a4-98d6-03e85de9857a",
+   "conditions": [],
+   "decorator": false,
+   "source_parent": ""
+  },
+  {
+   "id": "e85eec9a-7227-45e9-b784-31657e26fe38",
+   "source_id": "c1bba50d-5698-4097-9a0e-d2c5efbe9c06",
+   "destination_id": "616e11f0-a66c-4e61-bd98-7b83c7f48cc4",
+   "conditions": [],
+   "decorator": false,
+   "source_parent": ""
+  },
+  {
+   "id": "cbaea250-0d20-4f30-bad4-e449328724fb",
+   "source_id": "616e11f0-a66c-4e61-bd98-7b83c7f48cc4",
+   "destination_id": "6dca7bb1-48ad-4f99-8744-504e54cbef1b",
+   "conditions": [],
+   "decorator": false,
+   "source_parent": ""
+  },
+  {
+   "id": "68faad9b-4eb5-4a3f-a322-7d0740e38aab",
+   "source_id": "6dca7bb1-48ad-4f99-8744-504e54cbef1b",
+   "destination_id": "ab6334ad-1570-464c-a46c-707d59b4bcae",
+   "conditions": [],
+   "decorator": false,
+   "source_parent": ""
+  }
+ ],
+ "visual_branches": [],
+ "triggers": [
+  {
+   "app_name": "Webhook",
+   "description": "Custom HTTP input trigger",
+   "long_description": "Execute a workflow with an unauthicated POST request",
+   "status": "running",
+   "app_version": "1.0.0",
+   "errors": [],
+   "id": "c1bba50d-5698-4097-9a0e-d2c5efbe9c06",
+   "is_valid": true,
+   "isStartNode": false,
+   "label": "Webhook_1",
+   "environment": "cloud",
+   "trigger_type": "WEBHOOK",
+   "name": "Webhook",
+   "tags": null,
+   "parameters": [
+    {
+     "name": "url",
+     "value": "https://shuffler.io/api/v1/hooks/<WEBHOOK_ID_REDACTED>"
+    },
+    {
+     "description": "",
+     "id": "",
+     "name": "tmp",
+     "example": "",
+     "value": "",
+     "multiline": false,
+     "multiselect": false,
+     "options": null,
+     "action_field": "",
+     "variant": "",
+     "required": false,
+     "configuration": false,
+     "tags": null,
+     "schema": {
+      "type": ""
+     },
+     "skip_multicheck": false,
+     "custom_value": false,
+     "value_replace": null,
+     "unique_toggled": false,
+     "error": "",
+     "hidden": false
+    },
+    {
+     "description": "",
+     "id": "",
+     "name": "auth_headers",
+     "example": "",
+     "value": "",
+     "multiline": false,
+     "multiselect": false,
+     "options": null,
+     "action_field": "",
+     "variant": "",
+     "required": false,
+     "configuration": false,
+     "tags": null,
+     "schema": {
+      "type": ""
+     },
+     "skip_multicheck": false,
+     "custom_value": false,
+     "value_replace": null,
+     "unique_toggled": false,
+     "error": "",
+     "hidden": false
+    },
+    {
+     "description": "",
+     "id": "",
+     "name": "custom_response_body",
+     "example": "",
+     "value": "",
+     "multiline": false,
+     "multiselect": false,
+     "options": null,
+     "action_field": "",
+     "variant": "",
+     "required": false,
+     "configuration": false,
+     "tags": null,
+     "schema": {
+      "type": ""
+     },
+     "skip_multicheck": false,
+     "custom_value": false,
+     "value_replace": null,
+     "unique_toggled": false,
+     "error": "",
+     "hidden": false
+    },
+    {
+     "description": "",
+     "id": "",
+     "name": "await_response",
+     "example": "",
+     "value": "v1",
+     "multiline": false,
+     "multiselect": false,
+     "options": null,
+     "action_field": "",
+     "variant": "",
+     "required": false,
+     "configuration": false,
+     "tags": null,
+     "schema": {
+      "type": ""
+     },
+     "skip_multicheck": false,
+     "custom_value": false,
+     "value_replace": null,
+     "unique_toggled": false,
+     "error": "",
+     "hidden": false
+    }
+   ],
+   "position": {
+    "x": -1895.857142857143,
+    "y": -231
+   },
+   "priority": 0,
+   "source_workflow": "",
+   "execution_delay": 0,
+   "app_association": {
+    "name": "",
+    "app_version": "",
+    "id": "",
+    "link": "",
+    "is_valid": false,
+    "generated": false,
+    "downloaded": false,
+    "sharing": false,
+    "verified": false,
+    "invalid": false,
+    "activated": false,
+    "tested": false,
+    "hash": "",
+    "private_id": "",
+    "environment": "",
+    "contact_info": {
+     "name": "",
+     "url": ""
+    },
+    "folder_mount": {
+     "folder_mount": false,
+     "source_folder": "",
+     "destination_folder": ""
+    },
+    "authentication": {
+     "type": "",
+     "required": false,
+     "parameters": null,
+     "redirect_uri": "",
+     "token_uri": "",
+     "refresh_uri": "",
+     "scope": null,
+     "client_id": "",
+     "client_secret": "",
+     "grant_type": ""
+    },
+    "actions": null,
+    "tags": null,
+    "categories": null,
+    "created": 0,
+    "edited": 0,
+    "last_runtime": 0,
+    "versions": null,
+    "loop_versions": null,
+    "owner": "",
+    "sharing_config": "",
+    "public": false,
+    "published_id": "",
+    "child_ids": null,
+    "reference_org": "",
+    "reference_url": "",
+    "action_file_path": "",
+    "image_file_path": "",
+    "template": false,
+    "documentation": "",
+    "description": "",
+    "documentation_download_url": "",
+    "primary_usecases": null,
+    "skipped_build": false,
+    "reference_info": {
+     "onprem_backup": false,
+     "is_partner": false,
+     "partner_contacts": "",
+     "documentation_url": "",
+     "github_url": "",
+     "triggers": null
+    },
+    "blogpost": "",
+    "video": "",
+    "company_url": "",
+    "contributors": null,
+    "revision_id": "",
+    "collection": ""
+   },
+   "parent_controlled": false,
+   "replacement_for_trigger": "",
+   "_id": "c1bba50d-5698-4097-9a0e-d2c5efbe9c06",
+   "type": "TRIGGER",
+   "flowOrientation": "horizontal",
+   "circleId": "31284737-87e3-489d-849d-a91c510e7912",
+   "running": true
+  }
+ ],
+ "comments": [],
+ "configuration": {
+  "exit_on_error": false,
+  "start_from_top": false,
+  "skip_notifications": false
+ },
+ "created": 1793789469,
+ "edited": 1794041258,
+ "last_runtime": 0,
+ "due_date": 0,
+ "id": "",
+ "is_valid": true,
+ "name": "LAB",
+ "description": "",
+ "start": "616e11f0-a66c-4e61-bd98-7b83c7f48cc4",
+ "owner": "",
+ "sharing": "private",
+ "image": "",
+ "execution_org": {},
+ "org_id": "",
+ "workflow_variables": null,
+ "execution_environment": "",
+ "previously_saved": true,
+ "categories": {
+  "siem": {
+   "name": "",
+   "count": 2,
+   "id": "",
+   "description": ""
+  },
+  "communication": {
+   "name": "",
+   "count": 0,
+   "id": "",
+   "description": ""
+  },
+  "assets": {
+   "name": "",
+   "count": 0,
+   "id": "",
+   "description": ""
+  },
+  "cases": {
+   "name": "",
+   "count": 2,
+   "id": "",
+   "description": ""
+  },
+  "network": {
+   "name": "",
+   "count": 0,
+   "id": "",
+   "description": ""
+  },
+  "intel": {
+   "name": "",
+   "count": 2,
+   "id": "",
+   "description": ""
+  },
+  "edr": {
+   "name": "",
+   "count": 0,
+   "id": "",
+   "description": ""
+  },
+  "iam": {
+   "name": "",
+   "count": 0,
+   "id": "",
+   "description": ""
+  },
+  "ai": {
+   "name": "",
+   "count": 0,
+   "id": "",
+   "description": ""
+  },
+  "email": {
+   "name": "",
+   "count": 0,
+   "id": "",
+   "description": ""
+  },
+  "other": {
+   "name": "",
+   "count": 6,
+   "id": "",
+   "description": ""
+  }
+ },
+ "example_argument": "",
+ "public": false,
+ "default_return_value": "",
+ "contact_info": {
+  "name": "",
+  "url": ""
+ },
+ "published_id": "",
+ "revision_id": "",
+ "usecase_ids": null,
+ "input_questions": null,
+ "form_control": {
+  "input_markdown": "",
+  "output_yields": null,
+  "cleanup_actions": null,
+  "form_width": 0
+ },
+ "blogpost": "",
+ "video": "",
+ "status": "test",
+ "workflow_type": "",
+ "generated": false,
+ "hidden": false,
+ "background_processing": false,
+ "updated_by": "",
+ "validated": false,
+ "validation": {
+  "valid": true,
+  "changed_at": 1794045373000,
+  "last_valid": 1794045373000,
+  "validation_ran": true,
+  "notifications_created": 0,
+  "environment": "Cloud",
+  "workflow_id": "",
+  "execution_id": "5a8d1143-a03c-44eb-839d-ee4841aa4323",
+  "node_id": "",
+  "total_problems": 0,
+  "errors": [],
+  "subflow_apps": []
+ },
+ "parentorg_workflow": "",
+ "childorg_workflow_ids": null,
+ "suborg_distribution": null,
+ "backup_config": {
+  "onprem_backup": false,
+  "upload_repo": "",
+  "upload_branch": "",
+  "upload_username": "",
+  "upload_token": "",
+  "tokens_encrypted": false
+ },
+ "auth_groups": null,
+ "isValid": true,
+ "errors": []
+}
